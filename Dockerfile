@@ -1,10 +1,16 @@
-# Step 1: Build the Java application
+# STEP 1: Build logic
 FROM maven:3.8.4-openjdk-17-slim AS build
-COPY . .
+WORKDIR /app
+COPY pom.xml .
+COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Step 2: Run the application
+# STEP 2: Execution logic
 FROM openjdk:17-jdk-slim
-COPY --from=build /target/server-1.0.0.jar app.jar
+WORKDIR /app
+# Copy the built jar from the build stage
+COPY --from=build /app/target/*.jar vex-server.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/app.jar"]
+# Force port 8080 because Render likes it
+ENV PORT=8080
+ENTRYPOINT ["java", "-Dserver.port=${PORT}", "-jar", "vex-server.jar"]
